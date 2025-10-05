@@ -3,8 +3,11 @@ name = "ffttic-nxdtext-core"
 version = "1.0.0"
 edition = "2024"
 publish = false
+authors = ["Mátyás Mustoha <matyas.mustoha@gmail.com>"]
 
 [lib]
 path = "lib.rs"
 
 [dependencies]
+byteorder = "1"
+phf = { version = "0.13", features = ["macros"] }
