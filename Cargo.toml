@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [
+    "src/ffttic-nxdtext-cli",
+    "src/ffttic-nxdtext-core",
+]
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

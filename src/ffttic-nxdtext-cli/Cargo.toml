@@ -1,0 +1,11 @@
+[package]
+name = "ffttic-nxdtext-cli"
+version = "1.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "ffttic-nxdtext"
+path = "main.rs"
+
+[dependencies]
