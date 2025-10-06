@@ -21,7 +21,7 @@ pub enum CliCommand {
         output: CliDumpOutput,
     },
     /// Import text from either a JSON or a PO file.
-    Inject {
+    Insert {
         /// The source NXD file
         nxd: PathBuf,
 
