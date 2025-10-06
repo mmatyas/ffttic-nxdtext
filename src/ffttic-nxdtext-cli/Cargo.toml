@@ -3,9 +3,13 @@ name = "ffttic-nxdtext-cli"
 version = "1.0.0"
 edition = "2024"
 publish = false
+authors = ["Mátyás Mustoha <matyas.mustoha@gmail.com>"]
 
 [[bin]]
 name = "ffttic-nxdtext"
 path = "main.rs"
 
 [dependencies]
+clap = { version = "4.5", features = ["derive", "error-context", "help", "std", "usage"], default-features = false }
+ffttic-nxdtext-core = { path = "../ffttic-nxdtext-core" }
+serde_json = { version = "1.0.145", features = ["preserve_order"] }
