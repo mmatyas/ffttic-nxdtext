@@ -1,55 +1,21 @@
 use crate::{
+    binary::*,
     error::NxdError,
     nxd_tables::{Cell, NXD_COLUMNS},
 };
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use std::collections::{HashMap, hash_map::Entry};
-use std::io::{self, Cursor, Seek, SeekFrom, Write};
+use byteorder::{ReadBytesExt};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    io::{Cursor, Seek, SeekFrom, Write},
+};
 
 
 const NXD_MAGIC: u32 = u32::from_le_bytes(*b"NXDF");
 const NXD_FORMAT: u32 = 1;
 
 
-fn read_u32(reader: &mut impl ReadBytesExt) -> io::Result<u32> {
-    reader.read_u32::<LittleEndian>()
-}
-
-fn write_u32(value: u32, writer: &mut impl WriteBytesExt) -> io::Result<()> {
-    writer.write_u32::<LittleEndian>(value)
-}
-
-
-fn read_cstr(reader: &mut impl ReadBytesExt) -> io::Result<String> {
-    let mut buf = Vec::new();
-    loop {
-        match reader.read_u8()? {
-            0 => break,
-            c => buf.push(c),
-        }
-    }
-    let text = String::from_utf8(buf)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-    Ok(text)
-}
-
-fn read_cstr_at(reader: &mut (impl ReadBytesExt + Seek), offset: u64) -> io::Result<String> {
-    let current_pos = reader.stream_position()?;
-    reader.seek(SeekFrom::Start(offset))?;
-    let text = read_cstr(reader)?;
-    reader.seek(SeekFrom::Start(current_pos))?;
-    Ok(text)
-}
-
-fn write_cstr(text: &str, writer: &mut (impl WriteBytesExt + Seek)) -> io::Result<()> {
-    writer.write_all(text.as_bytes())?;
-    writer.write_u8(0x0)?;
-    Ok(())
-}
-
-
 #[derive(Clone, Debug)]
-pub struct Pointer {
+struct Pointer {
     self_pos: u64,
     rel_offset: u32,
 }
@@ -62,10 +28,6 @@ impl Pointer {
         })
     }
 
-    pub fn abs_target_from_self(&self) -> u64 {
-        self.self_pos + (self.rel_offset as u64)
-    }
-
     pub fn abs_target_from(&self, base: u64) -> u64 {
         base + (self.rel_offset as u64)
     }
@@ -73,7 +35,7 @@ impl Pointer {
 
 
 #[derive(Clone, Debug)]
-pub struct RowInfo {
+struct RowInfo {
     self_pos: u64,
     _row_key1: u32,
     _row_key2: Option<u32>,
@@ -143,53 +105,48 @@ enum NxdLocalizationType {
 }
 
 
-#[derive(Clone, Debug)]
-pub struct Header {}
+fn read_nxd_header(
+    reader: &mut (impl ReadBytesExt + Seek),
+) -> Result<Vec<RowInfo>, NxdError> {
+    let magic = read_u32(reader)?;
+    if magic != NXD_MAGIC {
+        return Err(NxdError::InvalidHeader);
+    }
 
-impl Header {
-    pub fn read_rowinfos(
-        reader: &mut (impl ReadBytesExt + Seek),
-    ) -> Result<Vec<RowInfo>, NxdError> {
-        let magic = read_u32(reader)?;
-        if magic != NXD_MAGIC {
-            return Err(NxdError::InvalidHeader);
-        }
+    let format = read_u32(reader)?;
+    if format != NXD_FORMAT {
+        return Err(NxdError::InvalidHeader);
+    }
 
-        let format = read_u32(reader)?;
-        if format != NXD_FORMAT {
-            return Err(NxdError::InvalidHeader);
-        }
+    let table_rowtype = reader.read_u8()?;
+    let table_localization = reader.read_u8()?;
+    let _uses_base_rowid = reader.read_u8()?;
+    let _blank = reader.read_u8()?;
+    let _base_rowid = read_u32(reader);
+    reader.seek(SeekFrom::Current(4 * 4))?;
 
-        let table_rowtype = reader.read_u8()?;
-        let table_localization = reader.read_u8()?;
-        let _uses_base_rowid = reader.read_u8()?;
-        let _blank = reader.read_u8()?;
-        let _base_rowid = read_u32(reader);
-        reader.seek(SeekFrom::Current(4 * 4))?;
-
-        match table_rowtype {
-            f if f == NxdRowType::SingleKey as u8 => {
-                let valid_localizations = &[
-                    NxdLocalizationType::SingleKeyUnlocalized as u8,
-                    NxdLocalizationType::SingleKeyLocalized as u8,
-                ];
-                if !valid_localizations.contains(&table_localization) {
-                    return Err(NxdError::InvalidHeader);
-                }
-                read_key1_rowinfos(reader)
-            },
-            f if f == NxdRowType::DoubleKey as u8 => {
-                let valid_localizations = &[
-                    NxdLocalizationType::DoubleKeyUnlocalized as u8,
-                    NxdLocalizationType::DoubleKeyLocalized as u8,
-                ];
-                if !valid_localizations.contains(&table_localization) {
-                    return Err(NxdError::InvalidHeader);
-                }
-                read_key2_rowinfos(reader)
-            },
-            _ => Err(NxdError::UnsupportedFormat),
-        }
+    match table_rowtype {
+        f if f == NxdRowType::SingleKey as u8 => {
+            let valid_localizations = &[
+                NxdLocalizationType::SingleKeyUnlocalized as u8,
+                NxdLocalizationType::SingleKeyLocalized as u8,
+            ];
+            if !valid_localizations.contains(&table_localization) {
+                return Err(NxdError::InvalidHeader);
+            }
+            read_key1_rowinfos(reader)
+        },
+        f if f == NxdRowType::DoubleKey as u8 => {
+            let valid_localizations = &[
+                NxdLocalizationType::DoubleKeyUnlocalized as u8,
+                NxdLocalizationType::DoubleKeyLocalized as u8,
+            ];
+            if !valid_localizations.contains(&table_localization) {
+                return Err(NxdError::InvalidHeader);
+            }
+            read_key2_rowinfos(reader)
+        },
+        _ => Err(NxdError::UnsupportedFormat),
     }
 }
 
@@ -222,7 +179,7 @@ fn read_cell(
 }
 
 
-pub fn read_row(
+fn read_row(
     reader: &mut (impl ReadBytesExt + Seek),
     row_definition: &[Cell],
     rowinfo: &RowInfo,
@@ -242,7 +199,31 @@ pub fn read_row(
 }
 
 
-pub fn update_with_text(
+pub fn read_rows(
+    reader: &mut (impl ReadBytesExt + Seek),
+    tablename: &str,
+) -> Result<Vec<(usize, usize, String)>, NxdError> {
+    let row_definition = NXD_COLUMNS
+        .get(tablename)
+        .ok_or(NxdError::UnsupportedFormat)?;
+
+    let rows = read_nxd_header(reader)?
+        .into_iter()
+        .map(|rowinfo| read_row(reader, &row_definition, &rowinfo))
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .enumerate()
+        .flat_map(|(row_idx, row)| row
+            .into_iter()
+            .map(move |(cell_idx, text)| (row_idx, cell_idx, text))
+        )
+        .collect::<Vec<_>>();
+
+    Ok(rows)
+}
+
+
+pub fn update_rows(
     reader: &mut (impl ReadBytesExt + Seek),
     tablename: &str,
     text_overrides: &HashMap<String, String>,
@@ -252,7 +233,7 @@ pub fn update_with_text(
         .ok_or(NxdError::UnsupportedFormat)?;
 
     let (rowinfos, rows, textarea_abs_pos) = {
-        let rowinfos = Header::read_rowinfos(reader)?;
+        let rowinfos = read_nxd_header(reader)?;
         let rowinfos_end = reader.stream_position()?;
 
         let rows = rowinfos

@@ -1,10 +1,12 @@
 #![forbid(unsafe_code)]
 
-
+mod binary;
 mod error;
-pub use error::NxdError;
-
 mod nxd_tables;
-pub use nxd_tables::NXD_COLUMNS;
+mod nxd;
 
-pub mod nxd;
+pub use error::NxdError;
+pub use nxd::{
+    read_rows,
+    update_rows,
+};

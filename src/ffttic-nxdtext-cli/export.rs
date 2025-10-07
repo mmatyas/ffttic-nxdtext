@@ -1,8 +1,5 @@
 use crate::{Error, path_to_tablename};
-use ffttic_nxdtext_core::{
-    nxd,
-    NXD_COLUMNS,
-};
+use ffttic_nxdtext_core as nxd;
 use std::fs::File;
 use std::io::{BufReader, Write};
 use std::path::{Path, PathBuf};
@@ -55,24 +52,10 @@ pub fn run(
     out_po: &Option<PathBuf>,
 ) -> Result<(), Error> {
     let tablename = path_to_tablename(&nxd_path)?;
-    let row_definition = NXD_COLUMNS
-        .get(tablename)
-        .ok_or(format!("Unknown or unsupported table name `{}`", tablename))?;
 
     let nxdfile = File::open(nxd_path)?;
     let mut reader = BufReader::new(nxdfile);
-
-    let rows = nxd::Header::read_rowinfos(&mut reader)?
-        .into_iter()
-        .map(|rowinfo| nxd::read_row(&mut reader, &row_definition, &rowinfo))
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .enumerate()
-        .flat_map(|(row_idx, row)| row
-            .into_iter()
-            .map(move |(cell_idx, text)| (row_idx, cell_idx, text))
-        )
-        .collect::<Vec<_>>();
+    let rows = nxd::read_rows(&mut reader, tablename)?;
 
     if let Some(json_path) = out_json {
         save_json(tablename, &rows, json_path)?;

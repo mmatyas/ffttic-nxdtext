@@ -1,5 +1,5 @@
 use crate::{Error, path_to_tablename};
-use ffttic_nxdtext_core::nxd;
+use ffttic_nxdtext_core as nxd;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Write};
@@ -60,7 +60,7 @@ pub fn run(
 
     let nxdfile = File::open(nxd_path)?;
     let mut reader = BufReader::new(nxdfile);
-    let out_buf = nxd::update_with_text(&mut reader, tablename, &text_overrides)?;
+    let out_buf = nxd::update_rows(&mut reader, tablename, &text_overrides)?;
 
     let mut out_file = File::create(out_nxd)?;
     out_file.write_all(&out_buf)?;
