@@ -59,8 +59,7 @@ pub fn run(
         .get(tablename)
         .ok_or(format!("Unknown or unsupported table name `{}`", tablename))?;
 
-    let nxdfile = File::open(nxd_path)
-        .map_err(|e| format!("Could not open input file: {}", e))?;
+    let nxdfile = File::open(nxd_path)?;
     let mut reader = BufReader::new(nxdfile);
 
     let rows = nxd::Header::read_rowinfos(&mut reader)?

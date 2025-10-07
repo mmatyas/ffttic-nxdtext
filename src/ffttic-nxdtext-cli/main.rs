@@ -3,6 +3,7 @@
 mod cli;
 mod error;
 mod export;
+mod import;
 
 use crate::cli::{Cli, CliCommand};
 use crate::error::Error;
@@ -24,7 +25,7 @@ fn inner_main(args: Cli) -> Result<(), Error> {
             export::run(nxd, &output.out_json, &output.out_po)?;
         },
         CliCommand::Import { nxd, input, out } => {
-            println!("inject {:#?} {:#?} {:#?}", nxd, input, out);
+            import::run(nxd, &input.json, &input.po, out)?;
         },
     }
     Ok(())

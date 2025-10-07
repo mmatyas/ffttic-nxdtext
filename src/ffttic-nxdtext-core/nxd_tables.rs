@@ -1,5 +1,6 @@
 use phf::phf_map;
 
+#[derive(Eq, PartialEq)]
 pub enum Cell {
     Zero32,
     Bool32,

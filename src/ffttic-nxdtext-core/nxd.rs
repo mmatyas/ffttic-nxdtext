@@ -1,9 +1,10 @@
 use crate::{
     error::NxdError,
-    nxd_tables::Cell,
+    nxd_tables::{Cell, NXD_COLUMNS},
 };
-use byteorder::{LittleEndian, ReadBytesExt};
-use std::io::{self, Seek, SeekFrom};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use std::collections::{HashMap, hash_map::Entry};
+use std::io::{self, Cursor, Seek, SeekFrom, Write};
 
 
 const NXD_MAGIC: u32 = u32::from_le_bytes(*b"NXDF");
@@ -12,6 +13,10 @@ const NXD_FORMAT: u32 = 1;
 
 fn read_u32(reader: &mut impl ReadBytesExt) -> io::Result<u32> {
     reader.read_u32::<LittleEndian>()
+}
+
+fn write_u32(value: u32, writer: &mut impl WriteBytesExt) -> io::Result<()> {
+    writer.write_u32::<LittleEndian>(value)
 }
 
 
@@ -34,6 +39,12 @@ fn read_cstr_at(reader: &mut (impl ReadBytesExt + Seek), offset: u64) -> io::Res
     let text = read_cstr(reader)?;
     reader.seek(SeekFrom::Start(current_pos))?;
     Ok(text)
+}
+
+fn write_cstr(text: &str, writer: &mut (impl WriteBytesExt + Seek)) -> io::Result<()> {
+    writer.write_all(text.as_bytes())?;
+    writer.write_u8(0x0)?;
+    Ok(())
 }
 
 
@@ -183,18 +194,19 @@ impl Header {
 }
 
 
+fn safe_pos_add(base: u64, delta: i8) -> Result<u64, NxdError> {
+    if delta >= 0 {
+        base.checked_add(delta as _).ok_or(NxdError::InvalidHeader)
+    } else {
+        base.checked_sub(delta.unsigned_abs() as _).ok_or(NxdError::InvalidHeader)
+    }
+}
+
+
 fn read_cell(
     reader: &mut (impl ReadBytesExt + Seek),
     cell_type: &Cell,
 ) -> Result<Option<String>, NxdError> {
-    fn safe_pos_add(base: u64, delta: i8) -> Result<u64, NxdError> {
-        if delta >= 0 {
-            base.checked_add(delta as _).ok_or(NxdError::InvalidHeader)
-        } else {
-            base.checked_sub(delta.unsigned_abs() as _).ok_or(NxdError::InvalidHeader)
-        }
-    }
-
     match cell_type {
         Cell::Zero32 | Cell::Bool32 | Cell::Skip32 | Cell::EmptyStr => {
             read_u32(reader)?;
@@ -227,4 +239,91 @@ pub fn read_row(
         .filter_map(|(idx, opt)| opt.map(|text| (idx, text)))
         .collect::<Vec<_>>();
     Ok(cells)
+}
+
+
+pub fn update_with_text(
+    reader: &mut (impl ReadBytesExt + Seek),
+    tablename: &str,
+    text_overrides: &HashMap<String, String>,
+) -> Result<Vec<u8>, NxdError> {
+    let row_definition = NXD_COLUMNS
+        .get(tablename)
+        .ok_or(NxdError::UnsupportedFormat)?;
+
+    let (rowinfos, rows, textarea_abs_pos) = {
+        let rowinfos = Header::read_rowinfos(reader)?;
+        let rowinfos_end = reader.stream_position()?;
+
+        let rows = rowinfos
+            .iter()
+            .map(|rowinfo| read_row(reader, &row_definition, &rowinfo))
+            .collect::<Result<Vec<_>, _>>()?;
+        let rows_end = reader.stream_position()?;
+
+        let textarea_abs_pos = std::cmp::max(rowinfos_end, rows_end);
+        (rowinfos, rows, textarea_abs_pos)
+    };
+
+    let mut out_buf = {
+        let capacity = reader.seek(SeekFrom::End(0))?;
+        Cursor::new(Vec::with_capacity(capacity as _))
+    };
+
+    let mut tmp_buf = vec![0u8; textarea_abs_pos as _];
+    reader.rewind()?;
+    reader.read_exact(&mut tmp_buf)?;
+    out_buf.write_all(&tmp_buf)?;
+
+    let mut text_buf = Cursor::new(Vec::<u8>::new());
+    let mut text_rel_offsets = HashMap::<String, u64>::new();
+
+    if row_definition.contains(&Cell::EmptyStr) {
+        let text = String::new();
+        write_cstr(&text, &mut text_buf)?;
+        text_rel_offsets.insert(text, 0);
+    }
+
+    for (row_idx, (rowinfo, rowdata)) in rowinfos.iter().zip(rows).enumerate() {
+        let rowdata_pos = rowinfo.row_pos.abs_target_from(rowinfo.self_pos);
+
+        for (cell_idx, original_text) in rowdata {
+            let cell_abs_pos = rowdata_pos + (cell_idx as u64) * 4;
+            if cell_abs_pos >= textarea_abs_pos {
+                return Err(NxdError::InvalidHeader);
+            }
+            out_buf.seek(SeekFrom::Start(cell_abs_pos))?;
+
+            let key = format!("{}/{}/{}", tablename, row_idx, cell_idx);
+            let text = text_overrides.get(&key).unwrap_or(&original_text);
+            let text_abs_pos = {
+                let text_rel_pos = match text_rel_offsets.entry(key) {
+                    Entry::Occupied(slot) => slot.into_mut(),
+                    Entry::Vacant(slot) => {
+                        let pos = text_buf.stream_position()?;
+                        write_cstr(&text, &mut text_buf)?;
+                        slot.insert(pos)
+                    },
+                };
+                textarea_abs_pos + *text_rel_pos
+            };
+
+            let ptr_base = {
+                let relative_field = match row_definition[cell_idx] {
+                    Cell::Str(shift) => shift,
+                    _ => return Err(NxdError::InvalidHeader),
+                };
+                safe_pos_add(out_buf.stream_position()?, relative_field * 4)?
+            };
+
+            let distance: u32 = text_abs_pos.checked_sub(ptr_base)
+                .and_then(|val| val.try_into().ok())
+                .ok_or(NxdError::InvalidHeader)?;
+            write_u32(distance, &mut out_buf)?;
+        }
+    }
+
+    out_buf.seek(SeekFrom::End(0))?;
+    out_buf.write_all(&text_buf.into_inner())?;
+    Ok(out_buf.into_inner())
 }
