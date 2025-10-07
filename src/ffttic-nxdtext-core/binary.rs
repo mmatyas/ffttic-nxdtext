@@ -5,6 +5,9 @@ use std::io::{self, Seek, SeekFrom};
 pub fn read_u32(reader: &mut impl ReadBytesExt) -> io::Result<u32> {
     reader.read_u32::<LittleEndian>()
 }
+pub fn read_i32(reader: &mut impl ReadBytesExt) -> io::Result<i32> {
+    reader.read_i32::<LittleEndian>()
+}
 
 pub fn write_u32(value: u32, writer: &mut impl WriteBytesExt) -> io::Result<()> {
     writer.write_u32::<LittleEndian>(value)

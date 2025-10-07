@@ -14,22 +14,32 @@ const NXD_MAGIC: u32 = u32::from_le_bytes(*b"NXDF");
 const NXD_FORMAT: u32 = 1;
 
 
+fn safe_pos_add(base: u64, delta: i32) -> Result<u64, NxdError> {
+    let result = if delta.is_negative() {
+        base.checked_sub(delta.unsigned_abs() as _)
+    } else {
+        base.checked_add(delta as _)
+    };
+    result.ok_or(NxdError::InvalidHeader)
+}
+
+
 #[derive(Clone, Debug)]
 struct Pointer {
     self_pos: u64,
-    rel_offset: u32,
+    rel_offset: i32,
 }
 
 impl Pointer {
     pub fn read(reader: &mut (impl ReadBytesExt + Seek)) -> Result<Self, NxdError> {
         Ok(Self {
             self_pos: reader.stream_position()?,
-            rel_offset: read_u32(reader)?,
+            rel_offset: read_i32(reader)?,
         })
     }
 
-    pub fn abs_target_from(&self, base: u64) -> u64 {
-        base + (self.rel_offset as u64)
+    pub fn abs_target_from(&self, base: u64) -> Result<u64, NxdError> {
+        safe_pos_add(base, self.rel_offset as _)
     }
 }
 
@@ -39,7 +49,7 @@ struct RowInfo {
     self_pos: u64,
     _row_key1: u32,
     _row_key2: Option<u32>,
-    row_pos: Pointer,
+    rowdata_pos: Pointer,
 }
 
 impl RowInfo {
@@ -48,7 +58,7 @@ impl RowInfo {
             self_pos: reader.stream_position()?,
             _row_key1: read_u32(reader)?,
             _row_key2: None,
-            row_pos: Pointer::read(reader)?,
+            rowdata_pos: Pointer::read(reader)?,
         })
     }
 
@@ -57,7 +67,7 @@ impl RowInfo {
             self_pos: reader.stream_position()?,
             _row_key1: read_u32(reader)?,
             _row_key2: Some(read_u32(reader)?),
-            row_pos: Pointer::read(reader)?,
+            rowdata_pos: Pointer::read(reader)?,
         })
     }
 }
@@ -123,7 +133,7 @@ fn read_nxd_header(
     let _uses_base_rowid = reader.read_u8()?;
     let _blank = reader.read_u8()?;
     let _base_rowid = read_u32(reader);
-    reader.seek(SeekFrom::Current(4 * 4))?;
+    reader.seek_relative(4 * 4)?;
 
     match table_rowtype {
         f if f == NxdRowType::SingleKey as u8 => {
@@ -151,15 +161,6 @@ fn read_nxd_header(
 }
 
 
-fn safe_pos_add(base: u64, delta: i8) -> Result<u64, NxdError> {
-    if delta >= 0 {
-        base.checked_add(delta as _).ok_or(NxdError::InvalidHeader)
-    } else {
-        base.checked_sub(delta.unsigned_abs() as _).ok_or(NxdError::InvalidHeader)
-    }
-}
-
-
 fn read_cell(
     reader: &mut (impl ReadBytesExt + Seek),
     cell_type: &Cell,
@@ -171,8 +172,9 @@ fn read_cell(
         },
         Cell::Str(relative_field) => {
             let ptr = Pointer::read(reader)?;
-            let ptr_base = safe_pos_add(ptr.self_pos, relative_field * 4)?;
-            let text = read_cstr_at(reader, ptr.abs_target_from(ptr_base))?;
+            let ptr_base = safe_pos_add(ptr.self_pos, (*relative_field as i32) * 4)?;
+            let text_base = ptr.abs_target_from(ptr_base)?;
+            let text = read_cstr_at(reader, text_base)?;
             Ok(Some(text))
         },
     }
@@ -184,8 +186,8 @@ fn read_row(
     row_definition: &[Cell],
     rowinfo: &RowInfo,
 ) -> Result<Vec<(usize, String)>, NxdError> {
-    let row_pos = rowinfo.row_pos.abs_target_from(rowinfo.self_pos);
-    reader.seek(SeekFrom::Start(row_pos))?;
+    let rowdata_pos = rowinfo.rowdata_pos.abs_target_from(rowinfo.self_pos)?;
+    reader.seek(SeekFrom::Start(rowdata_pos))?;
 
     let cells = row_definition
         .iter()
@@ -278,7 +280,7 @@ pub fn update_rows(
     }
 
     for (row_idx, (rowinfo, rowdata)) in rowinfos.iter().zip(rows).enumerate() {
-        let rowdata_pos = rowinfo.row_pos.abs_target_from(rowinfo.self_pos);
+        let rowdata_pos = rowinfo.rowdata_pos.abs_target_from(rowinfo.self_pos)?;
 
         for (cell_idx, original_text) in rowdata {
             let cell_abs_pos = rowdata_pos + (cell_idx as u64) * 4;
@@ -306,7 +308,7 @@ pub fn update_rows(
                     Cell::Str(shift) => shift,
                     _ => return Err(NxdError::InvalidHeader),
                 };
-                safe_pos_add(out_buf.stream_position()?, relative_field * 4)?
+                safe_pos_add(out_buf.stream_position()?, (relative_field as i32) * 4)?
             };
 
             let distance: u32 = text_abs_pos.checked_sub(ptr_base)
