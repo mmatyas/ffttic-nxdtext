@@ -1,5 +1,4 @@
-use std::io;
-use std::fmt;
+use std::{fmt, io};
 
 
 pub enum NxdError {

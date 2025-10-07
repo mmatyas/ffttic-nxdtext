@@ -2,11 +2,8 @@
 
 mod binary;
 mod error;
-mod nxd_tables;
 mod nxd;
+mod nxd_tables;
 
 pub use error::NxdError;
-pub use nxd::{
-    read_rows,
-    update_rows,
-};
+pub use nxd::{read_rows, update_rows};

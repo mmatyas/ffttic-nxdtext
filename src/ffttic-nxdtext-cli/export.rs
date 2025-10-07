@@ -1,14 +1,13 @@
 use crate::{Error, path_to_tablename};
 use ffttic_nxdtext_core as nxd;
-use std::fs::File;
-use std::io::{BufReader, Write};
-use std::path::{Path, PathBuf};
+use std::{
+    fs::File,
+    io::{BufReader, Write},
+    path::{Path, PathBuf},
+};
 
 
-fn save_json(
-    rows: &[(String, String)],
-    out_path: &Path,
-) -> Result<(), Error> {
+fn save_json(rows: &[(String, String)], out_path: &Path) -> Result<(), Error> {
     let mut map = serde_json::Map::with_capacity(rows.len());
 
     for (key, text) in rows {
@@ -23,10 +22,7 @@ fn save_json(
 }
 
 
-fn save_po(
-    rows: &[(String, String)],
-    out_path: &Path,
-) -> Result<(), Error> {
+fn save_po(rows: &[(String, String)], out_path: &Path) -> Result<(), Error> {
     let mut catalog = polib::catalog::Catalog::new(Default::default());
 
     for (key, text) in rows {

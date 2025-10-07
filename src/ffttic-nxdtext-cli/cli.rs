@@ -29,31 +29,31 @@ pub enum CliCommand {
         input: CliInjectInput,
 
         /// The output NXD file
-        #[arg(short, long, value_name="FILE", required=true)]
+        #[arg(short, long, value_name = "FILE", required = true)]
         out: PathBuf,
     },
 }
 
 #[derive(Args, Debug)]
-#[group(required=true, multiple=true)]
+#[group(required = true, multiple = true)]
 pub struct CliExportOutput {
     /// The output JSON file
-    #[arg(long, value_name="FILE")]
+    #[arg(long, value_name = "FILE")]
     pub out_json: Option<PathBuf>,
 
     /// The output PO file
-    #[arg(long, value_name="FILE")]
+    #[arg(long, value_name = "FILE")]
     pub out_po: Option<PathBuf>,
 }
 
 #[derive(Args, Debug)]
-#[group(required=true, multiple=false)]
+#[group(required = true, multiple = false)]
 pub struct CliInjectInput {
     /// The input JSON file
-    #[arg(long, value_name="FILE")]
+    #[arg(long, value_name = "FILE")]
     pub json: Option<PathBuf>,
 
     /// The input PO file
-    #[arg(long, value_name="FILE")]
+    #[arg(long, value_name = "FILE")]
     pub po: Option<PathBuf>,
 }

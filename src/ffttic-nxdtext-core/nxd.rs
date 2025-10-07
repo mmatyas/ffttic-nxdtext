@@ -3,7 +3,7 @@ use crate::{
     error::NxdError,
     nxd_tables::{Cell, NXD_COLUMNS},
 };
-use byteorder::{ReadBytesExt};
+use byteorder::ReadBytesExt;
 use std::{
     collections::{HashMap, hash_map::Entry},
     io::{Cursor, Seek, SeekFrom, Write},
@@ -115,9 +115,7 @@ enum NxdLocalizationType {
 }
 
 
-fn read_nxd_header(
-    reader: &mut (impl ReadBytesExt + Seek),
-) -> Result<Vec<RowInfo>, NxdError> {
+fn read_nxd_header(reader: &mut (impl ReadBytesExt + Seek)) -> Result<Vec<RowInfo>, NxdError> {
     let magic = read_u32(reader)?;
     if magic != NXD_MAGIC {
         return Err(NxdError::InvalidHeader);
@@ -201,11 +199,7 @@ fn read_row(
 }
 
 
-fn create_key(
-    tablename: &str,
-    row_idx: usize,
-    cell_idx: usize,
-) -> String {
+fn create_key(tablename: &str, row_idx: usize, cell_idx: usize) -> String {
     format!("{}/{}/{}", tablename, row_idx, cell_idx)
 }
 
@@ -224,13 +218,12 @@ pub fn read_rows(
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .enumerate()
-        .flat_map(|(row_idx, row)| row
-            .into_iter()
-            .map(move |(cell_idx, text)| {
+        .flat_map(|(row_idx, row)| {
+            row.into_iter().map(move |(cell_idx, text)| {
                 let key = create_key(tablename, row_idx, cell_idx);
                 (key, text)
             })
-        )
+        })
         .collect::<Vec<_>>();
 
     Ok(rows)
@@ -311,7 +304,8 @@ pub fn update_rows(
                 safe_pos_add(out_buf.stream_position()?, (relative_field as i32) * 4)?
             };
 
-            let distance: u32 = text_abs_pos.checked_sub(ptr_base)
+            let distance: u32 = text_abs_pos
+                .checked_sub(ptr_base)
                 .and_then(|val| val.try_into().ok())
                 .ok_or(NxdError::InvalidHeader)?;
             write_u32(distance, &mut out_buf)?;

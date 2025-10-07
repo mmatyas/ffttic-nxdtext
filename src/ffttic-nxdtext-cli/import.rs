@@ -1,15 +1,14 @@
 use crate::{Error, path_to_tablename};
 use ffttic_nxdtext_core as nxd;
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufReader, Write};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufReader, Write},
+    path::{Path, PathBuf},
+};
 
 
-fn load_json(
-    path: &Path,
-    overrides: &mut HashMap<String, String>,
-) -> Result<(), Error> {
+fn load_json(path: &Path, overrides: &mut HashMap<String, String>) -> Result<(), Error> {
     let file = File::open(path)?;
     let map: HashMap<String, String> = serde_json::from_reader(file)?;
     for (key, val) in map {
@@ -19,10 +18,7 @@ fn load_json(
 }
 
 
-fn load_po(
-    path: &Path,
-    overrides: &mut HashMap<String, String>,
-) -> Result<(), Error> {
+fn load_po(path: &Path, overrides: &mut HashMap<String, String>) -> Result<(), Error> {
     let po_options = polib::po_file::POParseOptions {
         message_body_only: true,
         translated_only: true,

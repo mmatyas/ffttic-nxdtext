@@ -22,8 +22,7 @@ pub fn read_cstr(reader: &mut impl ReadBytesExt) -> io::Result<String> {
             c => buf.push(c),
         }
     }
-    let text = String::from_utf8(buf)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    let text = String::from_utf8(buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
     Ok(text)
 }
 
