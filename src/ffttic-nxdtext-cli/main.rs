@@ -2,7 +2,7 @@
 
 mod cli;
 mod error;
-mod dump;
+mod export;
 
 use crate::cli::{Cli, CliCommand};
 use crate::error::Error;
@@ -20,10 +20,10 @@ fn path_to_tablename(path: &Path) -> Result<&str, Error> {
 
 fn inner_main(args: Cli) -> Result<(), Error> {
     match &args.command {
-        CliCommand::Dump { nxd, output } => {
-            dump::run(nxd, &output.out_json, &output.out_po)?;
+        CliCommand::Export { nxd, output } => {
+            export::run(nxd, &output.out_json, &output.out_po)?;
         },
-        CliCommand::Insert { nxd, input, out } => {
+        CliCommand::Import { nxd, input, out } => {
             println!("inject {:#?} {:#?} {:#?}", nxd, input, out);
         },
     }

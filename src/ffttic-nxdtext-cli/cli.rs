@@ -13,15 +13,15 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 pub enum CliCommand {
     /// Export text from NXD files.
-    Dump {
+    Export {
         /// The source NXD file
         nxd: PathBuf,
 
         #[command(flatten)]
-        output: CliDumpOutput,
+        output: CliExportOutput,
     },
     /// Import text from either a JSON or a PO file.
-    Insert {
+    Import {
         /// The source NXD file
         nxd: PathBuf,
 
@@ -36,7 +36,7 @@ pub enum CliCommand {
 
 #[derive(Args, Debug)]
 #[group(required=true, multiple=true)]
-pub struct CliDumpOutput {
+pub struct CliExportOutput {
     /// The output JSON file
     #[arg(long, value_name="FILE")]
     pub out_json: Option<PathBuf>,
