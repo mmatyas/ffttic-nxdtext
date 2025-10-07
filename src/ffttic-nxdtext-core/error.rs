@@ -17,7 +17,7 @@ impl From<io::Error> for NxdError {
 impl fmt::Display for NxdError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            NxdError::Io(ioerr) => ioerr.fmt(f),
+            NxdError::Io(ioerr) => write!(f, "I/O error: {}", ioerr),
             NxdError::InvalidHeader => write!(f, "Invalid file header"),
             NxdError::UnsupportedFormat => write!(f, "Unsupported format"),
         }
