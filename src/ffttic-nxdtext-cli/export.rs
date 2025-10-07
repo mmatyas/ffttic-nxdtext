@@ -6,15 +6,13 @@ use std::path::{Path, PathBuf};
 
 
 fn save_json(
-    tablename: &str,
-    rows: &[(usize, usize, String)],
+    rows: &[(String, String)],
     out_path: &Path,
 ) -> Result<(), Error> {
     let mut map = serde_json::Map::with_capacity(rows.len());
 
-    for (row_idx, cell_idx, text) in rows {
-        let key = format!("{}/{}/{}", tablename, row_idx, cell_idx);
-        map.insert(key, serde_json::Value::String(text.clone()));
+    for (key, text) in rows {
+        map.insert(key.clone(), serde_json::Value::String(text.clone()));
     }
 
     let json_content = serde_json::to_string_pretty(&map)?;
@@ -26,16 +24,14 @@ fn save_json(
 
 
 fn save_po(
-    tablename: &str,
-    rows: &[(usize, usize, String)],
+    rows: &[(String, String)],
     out_path: &Path,
 ) -> Result<(), Error> {
     let mut catalog = polib::catalog::Catalog::new(Default::default());
 
-    for (row_idx, cell_idx, text) in rows {
-        let key = format!("{}/{}/{}", tablename, row_idx, cell_idx);
+    for (key, text) in rows {
         let message = polib::message::Message::build_singular()
-            .with_msgctxt(key)
+            .with_msgctxt(key.clone())
             .with_msgid(text.clone())
             .done();
         catalog.append_or_update(message);
@@ -58,10 +54,10 @@ pub fn run(
     let rows = nxd::read_rows(&mut reader, tablename)?;
 
     if let Some(json_path) = out_json {
-        save_json(tablename, &rows, json_path)?;
+        save_json(&rows, json_path)?;
     }
     if let Some(po_path) = out_po {
-        save_po(tablename, &rows, po_path)?;
+        save_po(&rows, po_path)?;
     }
 
     Ok(())

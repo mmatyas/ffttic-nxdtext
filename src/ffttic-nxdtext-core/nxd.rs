@@ -199,10 +199,19 @@ fn read_row(
 }
 
 
+fn create_key(
+    tablename: &str,
+    row_idx: usize,
+    cell_idx: usize,
+) -> String {
+    format!("{}/{}/{}", tablename, row_idx, cell_idx)
+}
+
+
 pub fn read_rows(
     reader: &mut (impl ReadBytesExt + Seek),
     tablename: &str,
-) -> Result<Vec<(usize, usize, String)>, NxdError> {
+) -> Result<Vec<(String, String)>, NxdError> {
     let row_definition = NXD_COLUMNS
         .get(tablename)
         .ok_or(NxdError::UnsupportedFormat)?;
@@ -215,7 +224,10 @@ pub fn read_rows(
         .enumerate()
         .flat_map(|(row_idx, row)| row
             .into_iter()
-            .map(move |(cell_idx, text)| (row_idx, cell_idx, text))
+            .map(move |(cell_idx, text)| {
+                let key = create_key(tablename, row_idx, cell_idx);
+                (key, text)
+            })
         )
         .collect::<Vec<_>>();
 
@@ -275,7 +287,7 @@ pub fn update_rows(
             }
             out_buf.seek(SeekFrom::Start(cell_abs_pos))?;
 
-            let key = format!("{}/{}/{}", tablename, row_idx, cell_idx);
+            let key = create_key(tablename, row_idx, cell_idx);
             let text = text_overrides.get(&key).unwrap_or(&original_text);
             let text_abs_pos = {
                 let text_rel_pos = match text_rel_offsets.entry(key) {
