@@ -17,5 +17,5 @@ path = "main.rs"
 [dependencies]
 clap = { version = "4.5", features = ["derive", "error-context", "help", "std", "usage"], default-features = false }
 ffttic-nxdtext-core = { path = "../ffttic-nxdtext-core" }
-polib = "0.2.0"
+polib = { git = "https://github.com/mmatyas/rust-polib.git", rev = "5be2fb71bffb0bf78ab2c9b90b52d350142399dd" }
 serde_json = { version = "1.0.145", features = ["preserve_order"] }

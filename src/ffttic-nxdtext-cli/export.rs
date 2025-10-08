@@ -4,7 +4,7 @@ use crate::{Error, path_to_tablename};
 use ffttic_nxdtext_core as nxd;
 use std::{
     fs::{self, File},
-    io::{BufReader, Write},
+    io::{BufReader, BufWriter, Write},
     path::{Path, PathBuf},
 };
 
@@ -35,7 +35,9 @@ fn save_po(rows: &[(String, String)], out_path: &Path) -> Result<(), Error> {
         catalog.append_or_update(message);
     }
 
-    polib::po_file::write(&catalog, out_path)?;
+    let file = File::create(out_path)?;
+    let mut writer = BufWriter::new(file);
+    polib::po_file::write(&catalog, &mut writer)?;
     Ok(())
 }
 

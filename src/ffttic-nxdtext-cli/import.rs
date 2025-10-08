@@ -29,11 +29,12 @@ fn load_po(path: &Path, overrides: &mut HashMap<String, String>) -> Result<(), E
     let catalog = polib::po_file::parse_with_option(path, &po_options)?;
 
     for message in catalog.messages() {
-        if message.msgctxt().is_empty() {
-            continue;
-        }
+        let key = match message.msgctxt() {
+            Some(key) if !key.is_empty() => key,
+            _ => continue,
+        };
         if let Ok(text) = message.msgstr() {
-            overrides.insert(message.msgctxt().to_string(), text.to_string());
+            overrides.insert(key.to_string(), text.to_string());
         }
     }
     Ok(())

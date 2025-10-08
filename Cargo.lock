@@ -53,6 +53,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b94f61472cee1439c0b966b47e3aca9ae07e45d070759512cd390ea2bebc6675"
 
 [[package]]
+name = "concat-string"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7439becb5fafc780b6f4de382b1a7a3e70234afe783854a4702ee8adbb838609"
+
+[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -171,9 +177,9 @@ dependencies = [
 [[package]]
 name = "polib"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b393b155cf9be86249cba1b56cc81be0e6212c66d94ac0d76d37a1761f3bb1b"
+source = "git+https://github.com/mmatyas/rust-polib.git?rev=5be2fb7#5be2fb71bffb0bf78ab2c9b90b52d350142399dd"
 dependencies = [
+ "concat-string",
  "linereader",
 ]
 
