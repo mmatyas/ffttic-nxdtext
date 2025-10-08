@@ -7,7 +7,7 @@ use crate::{
 };
 use byteorder::ReadBytesExt;
 use std::{
-    collections::{HashMap, hash_map::Entry},
+    collections::HashMap,
     io::{Cursor, Seek, SeekFrom, Write},
 };
 
@@ -201,7 +201,7 @@ fn read_row(
 }
 
 
-fn create_key(tablename: &str, row_idx: usize, cell_idx: usize) -> String {
+fn create_translation_key(tablename: &str, row_idx: usize, cell_idx: usize) -> String {
     format!("{}/{}/{}", tablename, row_idx, cell_idx)
 }
 
@@ -222,7 +222,7 @@ pub fn read_rows(
         .enumerate()
         .flat_map(|(row_idx, row)| {
             row.into_iter().map(move |(cell_idx, text)| {
-                let key = create_key(tablename, row_idx, cell_idx);
+                let key = create_translation_key(tablename, row_idx, cell_idx);
                 (key, text)
             })
         })
@@ -284,18 +284,19 @@ pub fn update_rows(
             }
             out_buf.seek(SeekFrom::Start(cell_abs_pos))?;
 
-            let key = create_key(tablename, row_idx, cell_idx);
+            let key = create_translation_key(tablename, row_idx, cell_idx);
             let text = text_overrides.get(&key).unwrap_or(&original_text);
             let text_abs_pos = {
-                let text_rel_pos = match text_rel_offsets.entry(key) {
-                    Entry::Occupied(slot) => slot.into_mut(),
-                    Entry::Vacant(slot) => {
+                let text_rel_pos = match text_rel_offsets.get(text) {
+                    Some(offset) => *offset,
+                    None => {
                         let pos = text_buf.stream_position()?;
                         write_cstr(&text, &mut text_buf)?;
-                        slot.insert(pos)
-                    },
+                        text_rel_offsets.insert(text.clone(), pos);
+                        pos
+                    }
                 };
-                textarea_abs_pos + *text_rel_pos
+                textarea_abs_pos + text_rel_pos
             };
 
             let ptr_base = {
