@@ -1,3 +1,5 @@
+// Copyright (C) 2025  Mátyás Mustoha
+
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{self, Seek, SeekFrom};
 

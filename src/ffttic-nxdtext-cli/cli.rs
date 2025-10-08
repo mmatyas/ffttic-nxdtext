@@ -1,3 +1,5 @@
+// Copyright (C) 2025  Mátyás Mustoha
+
 use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 

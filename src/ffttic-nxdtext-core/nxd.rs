@@ -1,3 +1,5 @@
+// Copyright (C) 2025  Mátyás Mustoha
+
 use crate::{
     binary::*,
     error::NxdError,

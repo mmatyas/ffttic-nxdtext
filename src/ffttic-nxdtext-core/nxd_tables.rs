@@ -1,3 +1,5 @@
+// Copyright (C) 2025  Mátyás Mustoha
+
 use phf::phf_map;
 
 #[derive(Eq, PartialEq)]

@@ -1,3 +1,5 @@
+// Copyright (C) 2025  Mátyás Mustoha
+
 use crate::{Error, path_to_tablename};
 use ffttic_nxdtext_core as nxd;
 use std::{
