@@ -1,7 +1,7 @@
 use crate::{Error, path_to_tablename};
 use ffttic_nxdtext_core as nxd;
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{BufReader, Write},
     path::{Path, PathBuf},
 };
@@ -50,9 +50,15 @@ pub fn run(
     let rows = nxd::read_rows(&mut reader, tablename)?;
 
     if let Some(json_path) = out_json {
+        if let Some(parent) = json_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
         save_json(&rows, json_path)?;
     }
     if let Some(po_path) = out_po {
+        if let Some(parent) = po_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
         save_po(&rows, po_path)?;
     }
 

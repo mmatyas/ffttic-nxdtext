@@ -2,7 +2,7 @@ use crate::{Error, path_to_tablename};
 use ffttic_nxdtext_core as nxd;
 use std::{
     collections::HashMap,
-    fs::File,
+    fs::{self, File},
     io::{BufReader, Write},
     path::{Path, PathBuf},
 };
@@ -58,6 +58,9 @@ pub fn run(
     let mut reader = BufReader::new(nxdfile);
     let out_buf = nxd::update_rows(&mut reader, tablename, &text_overrides)?;
 
+    if let Some(parent) = out_nxd.parent() {
+        fs::create_dir_all(parent)?;
+    }
     let mut out_file = File::create(out_nxd)?;
     out_file.write_all(&out_buf)?;
 
