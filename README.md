@@ -12,21 +12,21 @@ Prebuilt binaries are available at the [**Releases**](https://github.com/mmatyas
 
 This is a command line application, and works on files already extracted with eg. FF16Tools. Only the files inside `0004.xx.pac` are supported.
 
-**Export to JSON:**
+- **Export to JSON:**
 
-`ffttic-nxdtext export your_original_file.nxd --out-json your_output.json`
+  `ffttic-nxdtext export your_original_file.nxd --out-json your_output.json`
 
-**Export to PO:**
+- **Export to PO:**
 
-`ffttic-nxdtext export your_original_file.nxd --out-po your_output.po`
+  `ffttic-nxdtext export your_original_file.nxd --out-po your_output.po`
 
-**Import from JSON:**
+- **Import from JSON:**
 
-`ffttic-nxdtext import your_original_file.nxd --json your_translation.json --out new_nxd_file.nxd`
+  `ffttic-nxdtext import your_original_file.nxd --json your_translation.json --out new_nxd_file.nxd`
 
-**Import from PO:**
+- **Import from PO:**
 
-`ffttic-nxdtext import your_original_file.nxd --po your_translation.po --out new_nxd_file.nxd`
+  `ffttic-nxdtext import your_original_file.nxd --po your_translation.po --out new_nxd_file.nxd`
 
 
 ## License
