@@ -294,7 +294,7 @@ pub fn update_rows(
                         write_cstr(&text, &mut text_buf)?;
                         text_rel_offsets.insert(text.clone(), pos);
                         pos
-                    }
+                    },
                 };
                 textarea_abs_pos + text_rel_pos
             };
