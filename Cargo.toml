@@ -5,6 +5,16 @@ members = [
     "src/ffttic-nxdtext-core",
 ]
 
+[workspace.package]
+authors = ["Mátyás Mustoha <matyas.mustoha@gmail.com>"]
+description = "A tool for FFT:TIC to export and import text strored in NXD files."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+homepage = "https://github.com/mmatyas/ffttic-nxdtext"
+repository = "https://github.com/mmatyas/ffttic-nxdtext"
+edition = "2024"
+publish = false
+
 [profile.release]
 lto = true
 codegen-units = 1
