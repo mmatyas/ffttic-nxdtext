@@ -4,9 +4,17 @@ use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
 
+const HELP_TEMPLATE: &str = "\
+{before-help}ffttic-nxdtext {version} by Mátyás Mustoha
+{about-with-newline}
+{usage-heading} {usage}
+
+{all-args}{after-help}";
+
 /// A tool for extracting and injecting text to/from NXD files.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
+#[clap(help_template = HELP_TEMPLATE)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: CliCommand,
