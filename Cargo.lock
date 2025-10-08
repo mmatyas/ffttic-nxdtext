@@ -177,7 +177,7 @@ dependencies = [
 [[package]]
 name = "polib"
 version = "0.2.0"
-source = "git+https://github.com/mmatyas/rust-polib.git?rev=5be2fb7#5be2fb71bffb0bf78ab2c9b90b52d350142399dd"
+source = "git+https://github.com/mmatyas/rust-polib.git?rev=5be2fb71bffb0bf78ab2c9b90b52d350142399dd#5be2fb71bffb0bf78ab2c9b90b52d350142399dd"
 dependencies = [
  "concat-string",
  "linereader",
