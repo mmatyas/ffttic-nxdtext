@@ -55,15 +55,15 @@ pub const NXD_COLUMNS: phf::Map<&'static str, &[Cell]> = phf_map! {
     ],
     "bgmmode" => &[
         Cell::Zero32,
-        Cell::Skip32,
+        Cell::EmptyStr,
         Cell::Bool32,
-        Cell::Skip32,
+        Cell::Str(-3),
         Cell::Str(0),
         Cell::Skip32,
     ],
     "book" => &[
         Cell::Zero32,
-        Cell::Skip32,
+        Cell::EmptyStr,
         Cell::Skip32,
         Cell::Skip32,
         Cell::Skip32,
@@ -165,10 +165,10 @@ pub const NXD_COLUMNS: phf::Map<&'static str, &[Cell]> = phf_map! {
         Cell::Str(-1),
         Cell::Str(-2),
         Cell::Str(-3),
+        Cell::Str(-4),
         Cell::Skip32,
         Cell::Skip32,
-        Cell::Skip32,
-        Cell::Skip32,
+        Cell::EmptyStr,
         Cell::Skip32,
         Cell::Skip32,
         Cell::Skip32,
@@ -368,7 +368,7 @@ pub const NXD_COLUMNS: phf::Map<&'static str, &[Cell]> = phf_map! {
         Cell::Str(-1),
         Cell::Skip32,
         Cell::Skip32,
-        Cell::Skip32,
+        Cell::EmptyStr,
     ],
     "systembonusspecialitem" => &[
         Cell::Zero32,
@@ -409,7 +409,7 @@ pub const NXD_COLUMNS: phf::Map<&'static str, &[Cell]> = phf_map! {
         Cell::Skip32,
         Cell::Skip32,
         Cell::Skip32,
-        Cell::Skip32,  // seems U8 + U16
+        Cell::Skip32,
     ],
     "ui" => &[
         Cell::Skip32,
@@ -418,7 +418,7 @@ pub const NXD_COLUMNS: phf::Map<&'static str, &[Cell]> = phf_map! {
     "uichronicleperiod" => &[
         Cell::Zero32,
         Cell::Zero32,
-        Cell::Skip32,
+        Cell::EmptyStr,
         Cell::Skip32,
         Cell::Skip32,
         Cell::Skip32,
@@ -449,7 +449,7 @@ pub const NXD_COLUMNS: phf::Map<&'static str, &[Cell]> = phf_map! {
         Cell::Skip32,
         Cell::Skip32,
         Cell::Skip32,
-        Cell::Skip32,
+        Cell::EmptyStr,
     ],
     "uijobabilityhelp" => &[
         Cell::Zero32,
@@ -469,7 +469,7 @@ pub const NXD_COLUMNS: phf::Map<&'static str, &[Cell]> = phf_map! {
         Cell::Skip32,
         Cell::Skip32,
         Cell::Skip32,
-        Cell::Skip32,  // seems 2 x i16
+        Cell::Skip32,
     ],
     "uistatuseffectcategory" => &[
         Cell::Zero32,

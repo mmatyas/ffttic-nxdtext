@@ -1,6 +1,6 @@
 [package]
 name = "ffttic-nxdtext-core"
-version = "1.0.0"
+version.workspace = true
 authors.workspace = true
 description.workspace = true
 readme.workspace = true

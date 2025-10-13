@@ -8,6 +8,7 @@ members = [
 [workspace.package]
 authors = ["Mátyás Mustoha <matyas.mustoha@gmail.com>"]
 description = "A tool for FFT:TIC to export and import text strored in NXD files."
+version = "1.1.0"
 readme = "README.md"
 license = "GPL-3.0-or-later"
 homepage = "https://github.com/mmatyas/ffttic-nxdtext"
