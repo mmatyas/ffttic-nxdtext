@@ -10,6 +10,16 @@ pub enum NxdError {
     Utf8Error {
         offset: u64,
     },
+
+    RowContext {
+        row: usize,
+        source: Box<NxdError>,
+    },
+    CellContext {
+        col: usize,
+        offset: u64,
+        source: Box<NxdError>,
+    },
 }
 
 impl From<io::Error> for NxdError {
@@ -26,6 +36,12 @@ impl fmt::Display for NxdError {
             NxdError::UnsupportedFormat => write!(f, "Unsupported format"),
             NxdError::Utf8Error { offset } => {
                 write!(f, "The text that starts at offset {} is not a valid UTF-8 sequence", offset)
+            },
+            NxdError::RowContext { row, source } => {
+                write!(f, "Error when trying to read row {}:\n  {}", row, source)
+            },
+            NxdError::CellContext { col, offset, source } => {
+                write!(f, "Error when trying to read cell {} at offset {}:\n    {}", col, offset, source)
             },
         }
     }

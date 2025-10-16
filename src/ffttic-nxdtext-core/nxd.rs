@@ -191,7 +191,16 @@ fn read_row(
 
     let cells = row_definition
         .iter()
-        .map(|cell_type| read_cell(reader, &cell_type))
+        .enumerate()
+        .map(|(cell_idx, cell_type)| {
+            let cell_pos = reader.stream_position()?;
+            read_cell(reader, &cell_type)
+                .map_err(|err| NxdError::CellContext {
+                    col: cell_idx,
+                    offset: cell_pos,
+                    source: Box::new(err),
+                })
+        })
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .enumerate()
@@ -216,7 +225,14 @@ pub fn read_rows(
 
     let rows = read_nxd_header(reader)?
         .into_iter()
-        .map(|rowinfo| read_row(reader, &row_definition, &rowinfo))
+        .enumerate()
+        .map(|(row_idx, rowinfo)| {
+            read_row(reader, &row_definition, &rowinfo)
+                .map_err(|err| NxdError::RowContext {
+                    row: row_idx,
+                    source: Box::new(err),
+                })
+        })
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .enumerate()
@@ -247,7 +263,14 @@ pub fn update_rows(
 
         let rows = rowinfos
             .iter()
-            .map(|rowinfo| read_row(reader, &row_definition, &rowinfo))
+            .enumerate()
+            .map(|(row_idx, rowinfo)| {
+                read_row(reader, &row_definition, &rowinfo)
+                    .map_err(|err| NxdError::RowContext {
+                        row: row_idx,
+                        source: Box::new(err),
+                    })
+            })
             .collect::<Result<Vec<_>, _>>()?;
         let rows_end = reader.stream_position()?;
 
