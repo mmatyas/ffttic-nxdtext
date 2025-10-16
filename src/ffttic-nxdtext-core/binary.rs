@@ -1,5 +1,6 @@
 // Copyright (C) 2025  Mátyás Mustoha
 
+use crate::NxdError;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{self, Seek, SeekFrom};
 
@@ -16,7 +17,8 @@ pub fn write_u32(value: u32, writer: &mut impl WriteBytesExt) -> io::Result<()> 
 }
 
 
-pub fn read_cstr(reader: &mut impl ReadBytesExt) -> io::Result<String> {
+pub fn read_cstr(reader: &mut (impl ReadBytesExt + Seek)) -> Result<String, NxdError> {
+    let offset = reader.stream_position()?;
     let mut buf = Vec::new();
     loop {
         match reader.read_u8()? {
@@ -24,11 +26,11 @@ pub fn read_cstr(reader: &mut impl ReadBytesExt) -> io::Result<String> {
             c => buf.push(c),
         }
     }
-    let text = String::from_utf8(buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    let text = String::from_utf8(buf).map_err(|_| NxdError::Utf8Error { offset })?;
     Ok(text)
 }
 
-pub fn read_cstr_at(reader: &mut (impl ReadBytesExt + Seek), offset: u64) -> io::Result<String> {
+pub fn read_cstr_at(reader: &mut (impl ReadBytesExt + Seek), offset: u64) -> Result<String, NxdError> {
     let current_pos = reader.stream_position()?;
     reader.seek(SeekFrom::Start(offset))?;
     let text = read_cstr(reader)?;

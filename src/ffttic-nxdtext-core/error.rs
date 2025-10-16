@@ -7,6 +7,9 @@ pub enum NxdError {
     Io(io::Error),
     InvalidHeader,
     UnsupportedFormat,
+    Utf8Error {
+        offset: u64,
+    },
 }
 
 impl From<io::Error> for NxdError {
@@ -21,6 +24,9 @@ impl fmt::Display for NxdError {
             NxdError::Io(ioerr) => write!(f, "I/O error: {}", ioerr),
             NxdError::InvalidHeader => write!(f, "Invalid file header"),
             NxdError::UnsupportedFormat => write!(f, "Unsupported format"),
+            NxdError::Utf8Error { offset } => {
+                write!(f, "The text that starts at offset {} is not a valid UTF-8 sequence", offset)
+            },
         }
     }
 }
