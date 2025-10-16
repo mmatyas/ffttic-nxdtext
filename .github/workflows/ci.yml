@@ -12,7 +12,11 @@ jobs:
   ci:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            release_name: linux
+          - os: windows-latest
+            release_name: windows
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -32,7 +36,7 @@ jobs:
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ffttic-nxdtext-${{ matrix.os }}
+          name: ffttic-nxdtext-${{ matrix.release_name }}
           path: |
             target/release/ffttic-nxdtext
             target/release/ffttic-nxdtext.exe
